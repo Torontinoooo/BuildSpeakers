@@ -1,68 +1,42 @@
-# BuildSpeakers
+# MFB OOP refactor
 
-Object-oriented educational toolkit for **accelerometer-based motional feedback (MFB)** loudspeaker simulation.
+This refactor keeps the earlier continuous-time loudspeaker study working, but makes
+it easier to read, extend, and run as named experiments.
 
-## What is included
+## Main ideas
 
-This repository now contains a buildable Python package `mfb/` with:
+- The plant is assembled in stages: amplifier, loudspeaker, sensor, controller, and repair path.
+- Every run is an explicit `ExperimentCase` with a reproducible folder name.
+- Every experiment writes its own `config.json`, `references.txt`, `summary.txt`, and `plots/` folder.
+- The comments and module docstrings point back to the practical MFB references that motivated the structure.
 
-- Core transfer-function utilities (`series`, `parallel`, `feedback`, frequency response).
-- Parameter dataclasses for speaker, box, sensor, controller, and amplifier/injection settings.
-- Physical components (speaker plant, accelerometer, PID controller, acoustic radiator).
-- Full loop/system assembly for open-loop, closed-loop, and closed-loop acoustic response.
-- Analysis helpers for frequency, stability, and time-domain simulation.
-- Study scripts to compare free-air vs sealed-box behavior.
-- Unit tests.
+## Package structure
 
-## Key transfer functions
+- `params.py` — immutable configuration objects
+- `experiment.py` — case naming and output folders
+- `physics.py` — `AMP(s)`, `SPK(s)`, `AccV(s)`, and acoustic model
+- `filters.py` — `F(s)`, `C(s)`, `R(s)` pieces
+- `loop.py` — readable staged assembly of the loop
+- `report.py` — text summary generation
+- `analyses.py` — plots and experiment execution
+- `run.py` — default entry point
 
-### Amplifier
-The amplifier is modeled as a flat gain block:
+## References reflected in the code
 
-\[
-G_{amp}(s) = K_{amp},\qquad K_{amp} = 10^{\frac{G_{dB}}{20}}
-\]
+- Schneider et al., AES 138 (2015): plant and control-block structure, practical bandwidth limiting
+- Munnig Schmidt, *Motional Feedback Theory in a Nutshell*: loop gain, sensitivity, phase/gain margins
+- Munnig Schmidt, *Acceleration Feedback Design*: module partition and experiment-oriented workflow
 
-With the default `G_dB = 26.3 dB`, this gives approximately `20.6 V/V`.
+## Running
 
-### Loudspeaker plant (voltage to acceleration)
-
-\[
-G_{spk}(s)=\frac{B\!l\,s^2}{B\!l^2 s + (sL_e+R_e)\left(s^2M_{ms}+sR_{ms}+\frac{1}{C_{tot}}\right)}
-\]
-
-### Sensor
-A second-order MEMS term plus output pole:
-
-\[
-G_{sens}(s)=S_0\frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}\frac{\omega_a}{s+\omega_a}
-\]
-
-### Loop equations
-
-\[
-L(s)=C(s)G(s)M(s),\quad
-T(s)=\frac{C(s)G(s)}{1+C(s)G(s)M(s)},\quad
-S(s)=\frac{1}{1+L(s)}
-\]
-
-## Quick start
+From the parent directory:
 
 ```bash
-python -m unittest discover -s tests
-python -m mfb.studies.compare_boxes
-python -m mfb.studies.injection_loop_demo
+python -m mfb_oop_refactored.run
 ```
 
-## Package layout
+Outputs go to:
 
-```
-mfb/
-├── core/
-├── params/
-├── components/
-├── nonlinear/
-├── systems/
-├── analysis/
-└── studies/
+```text
+results/<experiment-slug>/
 ```
