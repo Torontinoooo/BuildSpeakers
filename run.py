@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .analyses import MFBAnalyser
-from .experiment import default_experiment_case
+from mfb.analysis.analyses import MFBAnalyser
+from mfb.config.experiment import default_experiment_case
 
 
 def main() -> None:
