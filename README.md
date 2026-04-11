@@ -1,42 +1,61 @@
-# MFB OOP refactor
+# MFB project structure (paper-aligned)
 
-This refactor keeps the earlier continuous-time loudspeaker study working, but makes
-it easier to read, extend, and run as named experiments.
+This repository is now organized to mirror the decomposition used in the papers and design notes:
 
-## Main ideas
+- **plant**: amplifier + loudspeaker + accelerometer + acoustic radiation.
+- **forward path**: configurable controller chain `C(s) = PID(s) + CorrLP(s) + LinkT(s) [+ OutLP(s)]`.
+- **plant**: `P(s)` starts at amplifier and includes loudspeaker and accelerometer.
+- **feedback path**: `F(s) = CorrHP(s)` for now (designed to accept extra filters later).
+- **summing stage**: explicit difference amplifier model used by time-domain flow.
+- **experiment workflow**: configuration, case naming, analysis, and scripts are separated.
 
-- The plant is assembled in stages: amplifier, loudspeaker, sensor, controller, and repair path.
-- Every run is an explicit `ExperimentCase` with a reproducible folder name.
-- Every experiment writes its own `config.json`, `references.txt`, `summary.txt`, and `plots/` folder.
-- The comments and module docstrings point back to the practical MFB references that motivated the structure.
-
-## Package structure
-
-- `params.py` — immutable configuration objects
-- `experiment.py` — case naming and output folders
-- `physics.py` — `AMP(s)`, `SPK(s)`, `AccV(s)`, and acoustic model
-- `filters.py` — `F(s)`, `C(s)`, `R(s)` pieces
-- `loop.py` — readable staged assembly of the loop
-- `report.py` — text summary generation
-- `analyses.py` — plots and experiment execution
-- `run.py` — default entry point
-
-## References reflected in the code
-
-- Schneider et al., AES 138 (2015): plant and control-block structure, practical bandwidth limiting
-- Munnig Schmidt, *Motional Feedback Theory in a Nutshell*: loop gain, sensitivity, phase/gain margins
-- Munnig Schmidt, *Acceleration Feedback Design*: module partition and experiment-oriented workflow
-
-## Running
-
-From the parent directory:
-
-```bash
-python -m mfb_oop_refactored.run
-```
-
-Outputs go to:
+## Package layout
 
 ```text
-results/<experiment-slug>/
+mfb/
+  config/        # params, presets, experiment identity
+  plant/         # source, summing amp, amplifier, loudspeaker, sensor, acoustic
+  control/       # feedback filter F(s), controller C(s), Linkwitz/output shaping, loop assembler
+  models/
+    linear_tf/   # low-order transfer-function model (default)
+    nonlinear/   # Bl(x), Cms(x), Le(x,i), thermal placeholders
+    multifield/  # FE / coupled-field placeholders
+  simulation/    # signal-flow and time-domain experiment runner
+  analysis/      # plots, metrics, summary text
+  circuit/       # hardware-facing assumptions and interfaces
+  utils/         # helper and transfer-function math
+scripts/         # runnable entry points
+```
+
+## Highlighted linear equations
+
+The first model level remains the low-order linear lumped model:
+
+- `u(s) = Re i(s) + s Le i(s) + s Bl x(s)`
+- `Bl i(s) = Mms s² x(s) + Rms s x(s) + x(s)/Cms`
+- `G_a/v(s) = Bl s² / [Bl² s + (sLe + Re)(s²Mms + sRms + 1/Cms)]`
+
+These equations are documented in `mfb/models/linear_tf/plant_tf.py` and implemented via
+`SpeakerParams.voltage_to_acceleration_coefficients(...)`.
+
+## Development order encoded in code
+
+1. Linear transfer-function plant and loop assembly.
+2. Explicit sensor path conditioning (`F(s)`).
+3. Explicit summing amplifier (`u_sum = k_r u_ref - k_f u_fb + V_bias`).
+4. Prefilter and limiter hooks in time-domain experiments.
+5. Time-domain signal flow module for tweakable experiments.
+6. Nonlinear and multifield directories reserved for later expansion.
+
+Current loop partition:
+
+- forward controller: `C(s) = PID(s) -> CorrLP(s) -> LinkT(s) -> OutLP(s)` (each term optional by config)
+- plant: `P(s) = AMP(s) -> SPK(s) -> AccV(s)`
+- feedback: `F(s) = CorrHP(s)`
+
+## Run
+
+```bash
+python scripts/run_default.py
+python scripts/run_time_experiment.py
 ```

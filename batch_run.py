@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .analyses import MFBAnalyser
-from .presets import baseline_case, small_box_to_large_box_case, stable_pi_case
+from mfb.analysis.analyses import MFBAnalyser
+from mfb.config.presets import baseline_case, small_box_to_large_box_case, stable_pi_case
 
 
 def main() -> None:

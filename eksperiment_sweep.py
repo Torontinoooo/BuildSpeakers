@@ -6,11 +6,11 @@ import csv
 
 import numpy as np
 
-from .analyses import MFBAnalyser
-from .experiment import ExperimentCase, default_experiment_case
-from .params import PIDParams
-from .transfer_helpers import frequency_response, phase_margin_and_gain_margin
-from .sweep_compare import plot_sweep_side_by_side
+from mfb.analysis.analyses import MFBAnalyser
+from mfb.config.experiment import ExperimentCase, default_experiment_case
+from mfb.config.params import PIDParams
+from mfb.utils.transfer_helpers import frequency_response, phase_margin_and_gain_margin
+from mfb.analysis.sweep_compare import plot_sweep_side_by_side
 
 def _safe_first(values):
     return values[0] if values else None
